@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { AdBooking, Advertiser, User } from "@/types";
 import {
   subscribeToBookings,
@@ -42,17 +42,26 @@ export function useAdvertisers() {
 export function useClientAccount() {
   const user = useAuthStore((s) => s.user);
   const setUser = useAuthStore((s) => s.setUser);
+  const isAdvertiser = Boolean(user && user.role === "advertiser");
   const [client, setClient] = useState<Advertiser | undefined>();
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(isAdvertiser);
   const [error, setError] = useState<string | null>(null);
   const advertiserIdRef = useRef<string | undefined>(user?.advertiserId);
+  const [prevIsAdvertiser, setPrevIsAdvertiser] = useState(isAdvertiser);
 
-  useEffect(() => {
-    if (!user || user.role !== "advertiser") {
+  if (isAdvertiser !== prevIsAdvertiser) {
+    setPrevIsAdvertiser(isAdvertiser);
+    if (!isAdvertiser) {
       setLoading(false);
       setClient(undefined);
-      return;
+      setError(null);
+    } else {
+      setLoading(true);
     }
+  }
+
+  useEffect(() => {
+    if (!isAdvertiser || !user) return;
 
     let cancelled = false;
     advertiserIdRef.current = user.advertiserId;
@@ -67,7 +76,7 @@ export function useClientAccount() {
         if (account) {
           const normalized = normalizeAdvertiser(account);
           advertiserIdRef.current = normalized.id;
-          if (user && !user.advertiserId) {
+          if (!user.advertiserId) {
             setUser({ ...user, advertiserId: normalized.id });
           }
           setClient(normalized);
@@ -94,9 +103,9 @@ export function useClientAccount() {
       cancelled = true;
       unsub();
     };
-  }, [user?.id, user?.email, user?.role, user?.advertiserId, setUser]);
+  }, [isAdvertiser, user, setUser]);
 
-  return { client, loading, error };
+  return { client, loading: isAdvertiser ? loading : false, error };
 }
 
 /** For admin pages that already know the client id */

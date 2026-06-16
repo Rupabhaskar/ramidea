@@ -1,7 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useMemo, useState } from "react";
 import Link from "next/link";
 import { type ColumnDef } from "@tanstack/react-table";
 import { MoreHorizontal, Plus, Monitor, Wifi, WifiOff, MapPin } from "lucide-react";
@@ -12,25 +11,17 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { StatsCard, StatsCards } from "@/components/dashboard/stats-card";
 import { AddScreenDialog } from "@/components/screens/add-screen-dialog";
+import { useOpenFromSearchParam } from "@/hooks/use-open-from-search-param";
 import { useScreens, useZones } from "@/hooks/use-screen-management";
 import { getZoneName } from "@/services/screen-management-service";
 import { formatRelative } from "@/lib/utils";
 import type { Screen } from "@/types";
 
 function ScreensPageContent() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
   const { screens } = useScreens();
   const { zones } = useZones();
-  const [addOpen, setAddOpen] = useState(false);
+  const [addOpen, setAddOpen] = useOpenFromSearchParam("add", "1", "/portal/screens");
   const [zoneFilter, setZoneFilter] = useState<string>("all");
-
-  useEffect(() => {
-    if (searchParams.get("add") === "1") {
-      setAddOpen(true);
-      router.replace("/portal/screens", { scroll: false });
-    }
-  }, [searchParams, router]);
 
   const filteredScreens = useMemo(
     () => (zoneFilter === "all" ? screens : screens.filter((s) => s.zoneId === zoneFilter)),

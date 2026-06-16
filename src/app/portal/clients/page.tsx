@@ -1,7 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useMemo, useState } from "react";
 import Link from "next/link";
 import { type ColumnDef } from "@tanstack/react-table";
 import { MapPin, Plus } from "lucide-react";
@@ -13,25 +12,17 @@ import { Badge } from "@/components/ui/badge";
 import { CreateClientDialog } from "@/components/clients/create-client-dialog";
 import { AssignZonesDialog } from "@/components/clients/assign-zones-dialog";
 import { useAdvertisers } from "@/hooks/use-bookings";
+import { useOpenFromSearchParam } from "@/hooks/use-open-from-search-param";
 import { useZones } from "@/hooks/use-screen-management";
 import { getZoneName } from "@/services/screen-management-service";
 import { formatCurrency } from "@/lib/utils";
 import type { Advertiser } from "@/types";
 
 function ClientsPageContent() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
   const { advertisers, loading } = useAdvertisers();
   const { zones } = useZones();
-  const [createOpen, setCreateOpen] = useState(false);
+  const [createOpen, setCreateOpen] = useOpenFromSearchParam("create", "1", "/portal/clients");
   const [assignClient, setAssignClient] = useState<Advertiser | null>(null);
-
-  useEffect(() => {
-    if (searchParams.get("create") === "1") {
-      setCreateOpen(true);
-      router.replace("/portal/clients", { scroll: false });
-    }
-  }, [searchParams, router]);
 
   const columns = useMemo<ColumnDef<Advertiser>[]>(
     () => [

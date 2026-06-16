@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,35 +26,22 @@ interface ScreenGroupDialogProps {
   group?: ScreenGroup | null;
 }
 
-export function ScreenGroupDialog({
-  open,
-  onOpenChange,
+function ScreenGroupForm({
+  group,
   screens,
-  group = null,
-}: ScreenGroupDialogProps) {
+  onClose,
+}: {
+  group: ScreenGroup | null;
+  screens: Screen[];
+  onClose: () => void;
+}) {
   const isEdit = Boolean(group);
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [screenIds, setScreenIds] = useState<string[]>([]);
+  const [name, setName] = useState(() => group?.name ?? "");
+  const [description, setDescription] = useState(() => group?.description ?? "");
+  const [screenIds, setScreenIds] = useState<string[]>(() =>
+    group ? [...group.screenIds] : []
+  );
   const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    if (open && group) {
-      setName(group.name);
-      setDescription(group.description ?? "");
-      setScreenIds([...group.screenIds]);
-    } else if (open && !group) {
-      setName("");
-      setDescription("");
-      setScreenIds([]);
-    }
-  }, [open, group]);
-
-  function reset() {
-    setName("");
-    setDescription("");
-    setScreenIds([]);
-  }
 
   function toggleScreen(id: string) {
     setScreenIds((prev) =>
@@ -82,8 +69,7 @@ export function ScreenGroupDialog({
         await createScreenGroup({ name, description, screenIds });
         toast.success(`Group "${name}" created with ${screenIds.length} screens`);
       }
-      reset();
-      onOpenChange(false);
+      onClose();
     } catch {
       toast.error(isEdit ? "Failed to update group" : "Failed to create group");
     } finally {
@@ -99,8 +85,7 @@ export function ScreenGroupDialog({
     try {
       await deleteScreenGroup(group.id);
       toast.success(`Group "${group.name}" deleted`);
-      reset();
-      onOpenChange(false);
+      onClose();
     } catch {
       toast.error("Failed to delete group");
     } finally {
@@ -109,13 +94,78 @@ export function ScreenGroupDialog({
   }
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(next) => {
-        if (!next) reset();
-        onOpenChange(next);
-      }}
-    >
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <Label>Group Name</Label>
+        <Input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Coastal Andhra"
+          className="mt-1.5"
+        />
+      </div>
+      <div>
+        <Label>Description</Label>
+        <Input
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          placeholder="Vizag and Kakinada corridor"
+          className="mt-1.5"
+        />
+      </div>
+      <div>
+        <Label>Screens in group</Label>
+        <div className="mt-2 max-h-48 space-y-2 overflow-y-auto rounded-lg border border-border p-3">
+          {screens.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No screens available</p>
+          ) : (
+            screens.map((s) => (
+              <label key={s.id} className="flex items-center gap-2 text-sm cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="rounded"
+                  checked={screenIds.includes(s.id)}
+                  onChange={() => toggleScreen(s.id)}
+                />
+                <span>{s.name}</span>
+                <span className="text-muted-foreground text-xs">({s.city})</span>
+              </label>
+            ))
+          )}
+        </div>
+      </div>
+      <div className="flex gap-2 pt-2">
+        {isEdit && (
+          <Button
+            type="button"
+            variant="destructive"
+            onClick={handleDelete}
+            disabled={loading}
+          >
+            Delete
+          </Button>
+        )}
+        <Button type="button" variant="outline" className="flex-1" onClick={onClose}>
+          Cancel
+        </Button>
+        <Button type="submit" className="flex-1" disabled={loading}>
+          {loading ? "Saving..." : isEdit ? "Save Changes" : "Create Group"}
+        </Button>
+      </div>
+    </form>
+  );
+}
+
+export function ScreenGroupDialog({
+  open,
+  onOpenChange,
+  screens,
+  group = null,
+}: ScreenGroupDialogProps) {
+  const isEdit = Boolean(group);
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{isEdit ? "Edit Screen Group" : "Create Screen Group"}</DialogTitle>
@@ -125,70 +175,14 @@ export function ScreenGroupDialog({
               : "Bundle screens for campaigns and scheduling"}
           </p>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Label>Group Name</Label>
-            <Input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Coastal Andhra"
-              className="mt-1.5"
-            />
-          </div>
-          <div>
-            <Label>Description</Label>
-            <Input
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Vizag and Kakinada corridor"
-              className="mt-1.5"
-            />
-          </div>
-          <div>
-            <Label>Screens in group</Label>
-            <div className="mt-2 max-h-48 space-y-2 overflow-y-auto rounded-lg border border-border p-3">
-              {screens.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No screens available</p>
-              ) : (
-                screens.map((s) => (
-                  <label key={s.id} className="flex items-center gap-2 text-sm cursor-pointer">
-                    <input
-                      type="checkbox"
-                      className="rounded"
-                      checked={screenIds.includes(s.id)}
-                      onChange={() => toggleScreen(s.id)}
-                    />
-                    <span>{s.name}</span>
-                    <span className="text-muted-foreground text-xs">({s.city})</span>
-                  </label>
-                ))
-              )}
-            </div>
-          </div>
-          <div className="flex gap-2 pt-2">
-            {isEdit && (
-              <Button
-                type="button"
-                variant="destructive"
-                onClick={handleDelete}
-                disabled={loading}
-              >
-                Delete
-              </Button>
-            )}
-            <Button
-              type="button"
-              variant="outline"
-              className="flex-1"
-              onClick={() => onOpenChange(false)}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" className="flex-1" disabled={loading}>
-              {loading ? "Saving..." : isEdit ? "Save Changes" : "Create Group"}
-            </Button>
-          </div>
-        </form>
+        {open ? (
+          <ScreenGroupForm
+            key={group?.id ?? "new"}
+            group={group}
+            screens={screens}
+            onClose={() => onOpenChange(false)}
+          />
+        ) : null}
       </DialogContent>
     </Dialog>
   );

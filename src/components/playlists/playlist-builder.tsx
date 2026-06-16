@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 import {
@@ -48,11 +48,15 @@ export function PlaylistBuilder({
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<MediaType | "all">("all");
 
-  useEffect(() => {
+  const syncToken = `${playlistId ?? "new"}-${initialItems.length}-${initialLoop}-${initialShuffle}-${initialItems.map((i) => i.mediaId).join(",")}`;
+  const [prevSyncToken, setPrevSyncToken] = useState(syncToken);
+
+  if (syncToken !== prevSyncToken) {
+    setPrevSyncToken(syncToken);
     setItems(initialItems);
     setLoop(initialLoop);
     setShuffle(initialShuffle);
-  }, [initialItems, initialLoop, initialShuffle]);
+  }
 
   const mediaById = useMemo(
     () => Object.fromEntries(media.map((m) => [m.id, m])),

@@ -1,7 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useState } from "react";
 import Link from "next/link";
 import { Plus, MapPin, Monitor } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
@@ -10,24 +9,16 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CreateZoneDialog } from "@/components/screens/create-zone-dialog";
 import { AddScreenDialog } from "@/components/screens/add-screen-dialog";
+import { useOpenFromSearchParam } from "@/hooks/use-open-from-search-param";
 import { useScreens, useZones } from "@/hooks/use-screen-management";
 import { formatCurrency } from "@/lib/utils";
 
 function ZonesPageContent() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
   const { zones } = useZones();
   const { screens } = useScreens();
-  const [createOpen, setCreateOpen] = useState(false);
+  const [createOpen, setCreateOpen] = useOpenFromSearchParam("create", "1", "/portal/zones");
   const [addScreenOpen, setAddScreenOpen] = useState(false);
   const [addScreenZoneId, setAddScreenZoneId] = useState<string>();
-
-  useEffect(() => {
-    if (searchParams.get("create") === "1") {
-      setCreateOpen(true);
-      router.replace("/portal/zones", { scroll: false });
-    }
-  }, [searchParams, router]);
 
   return (
     <div className="space-y-8">

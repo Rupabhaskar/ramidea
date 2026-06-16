@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { format } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -40,21 +40,17 @@ export function SlotBookingCalendar({
     [zones, allowedZoneIds]
   );
 
-  const [selectedZone, setSelectedZone] = useState("");
-  const [selectedScreen, setSelectedScreen] = useState<string>("all");
+  const [zonePick, setZonePick] = useState<string | null>(null);
+  const [screenPicks, setScreenPicks] = useState<Record<string, string>>({});
   const [bookingKey, setBookingKey] = useState<string | null>(null);
   const today = format(new Date(), "yyyy-MM-dd");
 
-  useEffect(() => {
-    if (allowedZones.length === 0) return;
-    setSelectedZone((prev) =>
-      prev && allowedZoneIds.includes(prev) ? prev : allowedZones[0].id
-    );
-  }, [allowedZones, allowedZoneIds]);
+  const selectedZone =
+    zonePick && allowedZoneIds.includes(zonePick)
+      ? zonePick
+      : allowedZones[0]?.id ?? "";
 
-  useEffect(() => {
-    setSelectedScreen("all");
-  }, [selectedZone]);
+  const selectedScreen = screenPicks[selectedZone] ?? "all";
 
   const zone = allowedZones.find((z) => z.id === selectedZone);
 
@@ -141,7 +137,7 @@ export function SlotBookingCalendar({
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Select value={selectedZone} onValueChange={setSelectedZone}>
+          <Select value={selectedZone} onValueChange={setZonePick}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Select zone" />
             </SelectTrigger>
@@ -153,7 +149,12 @@ export function SlotBookingCalendar({
               ))}
             </SelectContent>
           </Select>
-          <Select value={selectedScreen} onValueChange={setSelectedScreen}>
+          <Select
+            value={selectedScreen}
+            onValueChange={(value) =>
+              setScreenPicks((prev) => ({ ...prev, [selectedZone]: value }))
+            }
+          >
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Screen" />
             </SelectTrigger>

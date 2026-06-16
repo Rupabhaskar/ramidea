@@ -1,7 +1,7 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Plus, Pencil } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
@@ -9,24 +9,23 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScreenGroupDialog } from "@/components/screens/screen-group-dialog";
+import { useOpenFromSearchParam } from "@/hooks/use-open-from-search-param";
 import { useScreenGroups, useScreens } from "@/hooks/use-screen-management";
 import type { ScreenGroup } from "@/types";
 
 function ScreenGroupsPageContent() {
-  const router = useRouter();
   const searchParams = useSearchParams();
+  const wantsCreate = searchParams.get("create") === "1";
   const { groups } = useScreenGroups();
   const { screens } = useScreens();
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogOpen, setDialogOpen] = useOpenFromSearchParam("create", "1", "/portal/screens/groups");
   const [editingGroup, setEditingGroup] = useState<ScreenGroup | null>(null);
+  const [prevWantsCreate, setPrevWantsCreate] = useState(wantsCreate);
 
-  useEffect(() => {
-    if (searchParams.get("create") === "1") {
-      setEditingGroup(null);
-      setDialogOpen(true);
-      router.replace("/portal/screens/groups", { scroll: false });
-    }
-  }, [searchParams, router]);
+  if (wantsCreate !== prevWantsCreate) {
+    setPrevWantsCreate(wantsCreate);
+    if (wantsCreate) setEditingGroup(null);
+  }
 
   function openCreate() {
     setEditingGroup(null);
