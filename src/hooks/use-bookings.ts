@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { AdBooking, Advertiser, User } from "@/types";
+import type { AdBooking, Advertiser } from "@/types";
 import {
   subscribeToBookings,
   subscribeToAdvertisers,
@@ -63,21 +63,22 @@ export function useClientAccount() {
   useEffect(() => {
     if (!isAdvertiser || !user) return;
 
+    const currentUser = user;
     let cancelled = false;
-    advertiserIdRef.current = user.advertiserId;
+    advertiserIdRef.current = currentUser.advertiserId;
 
     async function load() {
       setLoading(true);
       setError(null);
       try {
-        const account = await getOrCreateClientAccount(user as User);
+        const account = await getOrCreateClientAccount(currentUser);
         if (cancelled) return;
 
         if (account) {
           const normalized = normalizeAdvertiser(account);
           advertiserIdRef.current = normalized.id;
-          if (!user.advertiserId) {
-            setUser({ ...user, advertiserId: normalized.id });
+          if (!currentUser.advertiserId) {
+            setUser({ ...currentUser, advertiserId: normalized.id });
           }
           setClient(normalized);
         } else {
